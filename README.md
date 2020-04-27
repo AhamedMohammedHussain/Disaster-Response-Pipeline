@@ -12,3 +12,8 @@
     `python run.py`
 
 3. Go to http://0.0.0.0:3001/
+
+
+
+
+###NOTE: It takes almost 1 hr to train. Please train in local computer or in kaggle .
