@@ -2,6 +2,8 @@ import sys
 import pickle
 import pandas as pd
 from sqlalchemy import create_engine
+from joblib import parallel_backend
+import joblib
 import nltk
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
@@ -27,7 +29,8 @@ def load_data(database_filepath):
     X = df.message
     Y = df.iloc[:, 4:]
     
-    category_names = list(df.columns[4:])
+    category_names = list(Y.columns)
+    print(category_names)
     
     return X, Y, category_names
 
@@ -68,23 +71,23 @@ def build_model():
         'clf__estimator__n_estimators': [10, 20, 50],
         'clf__estimator__criterion': ['gini', 'entropy'],
         'clf__estimator__max_depth': [2, 5, None],
-#        'clf__estimator__min_samples_leaf':[1, 5, 10],
+        'clf__estimator__min_samples_leaf':[1, 5, 10],
     }
 
-    grid = GridSearchCV(estimator=pipeline, param_grid=parameters , n_jobs=-1 , cv=2)
+    grid = GridSearchCV(estimator=pipeline, param_grid=parameters ,verbose=1)#, n_jobs=-1 , cv=2)
 
     return grid
-
 
 def evaluate_model(model, X_test, Y_test, category_names):
 
     Y_pred = model.predict(X_test)
-    #labels = df.iloc[:, 4:].columns.tolist()
+    #print(classification_report(Y_test, Y_pred, target_names=category_names))
+    #for i in range(Y_test.shape[1]):
+    #    print('Accuracy of %25s: %.2f' %(category_names[i], accuracy_score(Y_test.iloc[:, i].values, y_pred[:,i])))
+    labels = category_names
     for i in range(36):
         print(category_names[i])
         print(classification_report(Y_test[:, i], Y_pred[:,i]))
-    #df = pd.DataFrame(classification_report(Y_test, Y_pred, target_names=category_names, output_dict=True)).T.reset_index()
-
     
 
 def save_model(model, model_filepath):
@@ -94,27 +97,56 @@ def save_model(model, model_filepath):
     file.close()
 
 
+
 def main():
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
-        print('Building model...')
-        model = build_model()
-        
-        print('Training model...')
-        model.fit(X_train, Y_train)
-        
-        print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
 
-        print('Saving model...\n    MODEL: {}'.format(model_filepath))
+        intermediate_saving = model_filepath[:model_filepath.rfind("/")+1]
+
+        
+        save_after_build=intermediate_saving+"save_after_model_build.pkl"
+        try:
+            model = joblib.load(save_after_build)
+            print('Loading model...')
+        except:
+
+            print('Building model...')
+            model = build_model()
+
+            save_after_build=intermediate_saving+"save_after_model_build.pkl"
+            print('Saving model after building...\n    MODEL: {}'.format(save_after_build))
+            save_model(model, save_after_build)
+
+
+    
+        save_after_fit=intermediate_saving+"save_after_fit.pkl"
+        try:
+            model = joblib.load(save_after_fit)
+            print('Loading model...')
+
+        except:
+            print('Training model...')
+            with parallel_backend('multiprocessing'):
+                model.fit(X_train, Y_train)
+
+
+            print('Saving model after fitting...\n    MODEL: {}'.format(save_after_fit))
+            save_model(model, save_after_fit)
+
+
+            
+        print('Evaluating model...')
+        evaluate_model(model, X_test, Y_test.values, category_names)
+
+        print('Saving model after evaluating...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
 
         print('Trained model saved!')
-
+    
     else:
         print('Please provide the filepath of the disaster messages database '\
               'as the first argument and the filepath of the pickle file to '\
