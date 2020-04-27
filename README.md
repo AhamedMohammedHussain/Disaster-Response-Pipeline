@@ -16,4 +16,4 @@
 
 
 
-###NOTE: It takes almost 1 hr to train. Please train in local computer or in kaggle .
+#### NOTE: It takes almost 1 hr to train. Please train in local computer or in kaggle .
