@@ -13,7 +13,10 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.feature_extraction.text import CountVectorizer, BaseEstimator, TfidfTransformer
 from sklearn.metrics import f1_score, recall_score, precision_score, classification_report, accuracy_score
 import re
-nltk.download('stopwords')
+nltk.download(['punkt', 'wordnet', 'stopwords', 'averaged_perceptron_tagger', 'maxent_ne_chunker', 'words'])
+
+stop_words = stopwords.words("english")
+
 
 def load_data(database_filepath):
     
@@ -45,7 +48,6 @@ def tokenize(text):
     # lemmatize and remove stop words
     lemmatizer = WordNetLemmatizer()
     #stopswords are common words
-    stop_words = stopwords.words("english")
     
     #clean will contain unique words . not common words
     clean = []
@@ -85,7 +87,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
 def save_model(model, model_filepath):
     
     file = open(model_filepath, 'wb')
-    pickle.dump(cv, file)
+    pickle.dump(model, file)
     file.close()
 
 
