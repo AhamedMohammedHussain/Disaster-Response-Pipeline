@@ -79,8 +79,11 @@ def build_model():
 def evaluate_model(model, X_test, Y_test, category_names):
 
     Y_pred = model.predict(X_test)
-    
-    df = pd.DataFrame(classification_report(Y_test, Y_pred, target_names=category_names, output_dict=True)).T.reset_index()
+    #labels = df.iloc[:, 4:].columns.tolist()
+    for i in range(36):
+        print(category_names[i])
+        print(classification_report(Y_test[:, i], Y_pred[:,i]))
+    #df = pd.DataFrame(classification_report(Y_test, Y_pred, target_names=category_names, output_dict=True)).T.reset_index()
 
     
 
