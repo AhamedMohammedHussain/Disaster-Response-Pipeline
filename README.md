@@ -17,3 +17,5 @@
 
 
 #### NOTE: It takes almost 1 hr to train. Please train in local computer or in kaggle .
+https://drive.google.com/open?id=1kXG1--5f2xtHzTkycy6mioRXkSx_6BOu
+for skipping the training part. It works in kaggle. For me , it didn't work in local computer . It gives a warning when used in local computer.
