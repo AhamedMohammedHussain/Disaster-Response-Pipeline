@@ -78,9 +78,9 @@ def build_model():
 
 def evaluate_model(model, X_test, Y_test, category_names):
 
-    y_pred = model.predict(X_test)
+    Y_pred = model.predict(X_test)
     
-    df = pd.DataFrame(classification_report(y_test, y_pred1, target_names=labels, output_dict=True)).T.reset_index()
+    df = pd.DataFrame(classification_report(Y_test, Y_pred, target_names=category_names, output_dict=True)).T.reset_index()
 
     
 
