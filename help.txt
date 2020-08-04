@@ -1,0 +1,192 @@
+1	ETL
+		json, csv, sqllite
+		null, duplicate, missing, one hot encoding, merging, outliners, scaling(standardization & normalization)
+		creating new features
+		
+2	NLP
+
+		Text processing -> feature extraction -> modeling
+		
+3		Text Processing
+
+		requests, beautifulsoup			clean irrevalant items (html tags) (usually takes source code of web page)
+		re								normalize by lower casing , punctuating , and removing extra space
+		nltk.tokenize, word_tokenize, sent_tokenize, regular expression tokenizer(remove punctuation and tokenize), tweet tokenizer
+										tokenising -> split the text into words or tokens 
+		nltk.corpus, stopwords			stopword removal -> remove common words
+		nltk, pos_tag, ne_chunk			identify different parts of speech (noun , verb , names etc)
+		nltk.stem.porter, porterstemmer, nltk.stem.wordnet, wordnetlemmatizer
+										Stemming (removing some letters from words) and lemmatization (trace back to its root)-> convert them into canonical forms
+		
+4		Feature Extraction
+		
+		wordnet					Graph based
+		bagofwords, doc2vec		document based(spam detection, sentiment analysis)
+		word2vec, glove			individual words (text generation, machine translation)
+
+		bagofwords				unordered collection of words, 
+								vectorize the words(freq of each word in a sentence by forming a matrix), 
+								divide them by the total freq of each word to nullify any emphasis on words (economy related -> ''price')
+									thus highlights unique words than more freq words
+									tf-idf (to check revelance in documents)
+								then cosine similarity to get similar words
+								wordembedding(clustering similar words, having same distance for opposite words like man woman king queen)
+									synonyms, analogies, neutral, positive, negative 
+		
+		
+5		Modeling
+		
+		Model predicting next words must understand the given words very well 
+		forward embedding
+		word2vec model						continuous bag of words 
+		skip-gram model 					1-hot-encoding of words in a sentence, 
+											feed it to neural network to predict surrounding words, 
+											optimize weights or parameters uding suitable loss function
+											word-vector is a hidden layer in that neural network
+		glove(co-occurence probability)		probability that word i occurs in context of word j is computed for all ij pairs
+											random vector is initiliased for that word when it occurs as context (wi - row vector) and when it is target (wj - column vector)
+											now this wi * wj should be that probability
+											that is break down this probability matrix into 2 different matrices
+
+		
+6		Distributed Hypothesis-> words that occur in the same context tends to have similar meanings (tea, coffee)
+		Models are usually not trained from scratch unless we need specifically for it.
+
+7		For NLP
+		one-hot-encoding(10^5)->word-embedding(lookup)->word vector(10^2)->Recurrent layer->dense layer->one-hot encoded output
+				train only recurrent layer and dense layer
+				
+		For CNN
+		Input image(128*128=10^5)->convolutional layer->Dense layer->output label(10^2)
+		Input image(128*128=10^5)->modify some part of pretrained layer and retrain them->Dense layer->output label(10^2)
+
+
+8		To map different concepts like similarity , difference between words , we need more dimensions--> hard to visualise
+		t-SNE
+		t-distributed stochastic neighbor embedding
+			dimension reductionality techinque to map high dimensional vectors to lower dimensional space
+			it makes sure similar objects stay closer and dissimilar objects stay at same distance
+			hence preserves structures
+			
+			
+			
+9		Estimators -> transformer estimators (CountVectorizer() & TfidfTransformer())		transform method
+				   -> predictor(RandomForestClassifier())									predict method
+		
+		These can be done in pipeline->scikit-learn pipeline
+		every step should be a transformer execpt last one which can be any estimator
+		
+		SImpler, consice, automates, mental workload, understandable workflow, 
+		can optimise workflow with Gridsearch 
+							(method that automates process of testing diff values to find combinations of parameters that result in highest performing model)
+							over full pipeline
+							tunes parameters for data preparations and model
+		prevents data leakage
+						from influence by test or validation data into training process
+						all transformations from data preparations to feature extractions occur within each fold of cross validation process
+						
+						
+		Without pipeline
+
+	|	vect = CountVectorizer()
+	|	tfidf = TfidfTransformer()
+	|	clf = RandomForestClassifier()
+	|
+	|	# train classifier
+	|	X_train_counts = vect.fit_transform(X_train)
+	|	X_train_tfidf = tfidf.fit_transform(X_train_counts)
+	|	clf.fit(X_train_tfidf, y_train)
+	|
+	|	# predict on test data
+	|	X_test_counts = vect.transform(X_test)
+	|	X_test_tfidf = tfidf.transform(X_test_counts)
+	|	y_pred = clf.predict(X_test_tfidf)
+
+
+
+		With Pipeline
+		
+	|	pipeline = Pipeline([
+	|		('vect', CountVectorizer()),
+	|		('tfidf', TfidfTransformer()),
+	|		('clf', RandomForestClassifier()),
+	|	])
+	|
+	|	# train classifier
+	|	pipeline.fit(Xtrain)
+	|
+	|	# evaluate all steps on test set
+	|	predicted = pipeline.predict(Xtest)
+		
+		
+10		Feature union of scikit-learn's pipeline module
+						when need to check for 2 features (ex tfidf, no of character text length for each documents)
+						it allows to perform steps in parallel and take union of results for next step (appending) before next step
+		
+		Multiple feature unions are used within pipeline
+		Multiple pipeline are used within feature unions
+
+
+
+		without pipeline and feature union
+
+	|	vect = CountVectorizer()
+	|	tfidf = TfidfTransformer()
+	|	txt_len = TextLengthExtractor()
+	|	clf = RandomForestClassifier()
+	|
+	|	# train classifier
+	|	X_train_counts = vect.fit_transform(X_train)
+	|	X_train_tfidf = tfidf.fit_transform(X_train_counts)
+	|
+	|	X_train_len = txt_len.fit_transform(X_train)
+	|	X_train_features = hstack([X_train_tfidf, X_train_len])
+	|	clf.fit(X_train_features, y_train)
+	|
+	|	# predict on test data
+	|	X_test_counts = vect.transform(X_test)
+	|	X_test_tfidf = tfidf.transform(X_test_counts)
+	|
+	|	X_test_len = txt_len.transform(X_test)
+	|	X_test_features = hstack([X_test_tfidf, X_test_len])
+	|	y_pred = clf.predict(X_test_features)
+
+		
+
+		With pipeline and feature union
+		
+	|	X = df['text'].values
+	|	y = df['label'].values
+	|	X_train, X_test, y_train, y_test = train_test_split(X, y)
+	|
+	|	pipeline = Pipeline([
+	|		('features', FeatureUnion([
+	|
+	|			('nlp_pipeline', Pipeline([
+	|				('vect', CountVectorizer()
+	|				('tfidf', TfidfTransformer())
+	|			])),
+	|
+	|			('txt_len', TextLengthExtractor())
+	|		])),
+	|
+	|		('clf', RandomForestClassifier())
+	|	])
+	|
+	|	# train classifier
+	|	pipeline.fit(Xtrain)
+	|
+	|	# predict on test data
+	|	predicted = pipeline.predict(Xtest)
+
+	
+		to build custom transformer , 2 ways
+			funciton transformer
+			build it from scratch
+
+
+	
+11	Beautifulsoup -> XML parser , html parser
+	requests -> get source code htmk , jsons etc
+
+		
